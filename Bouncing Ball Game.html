@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        canvas {
+            border: 1px solid #000;
+            display: block;
+            margin: 20px auto;
+        }
+
+        button {
+            font-size: 24px;
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            display: none;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+
+
+    </style>
+    <title>Bouncing Ball Game</title>
+</head>
+<body>
+<canvas id="gameCanvas" width="600" height="900"></canvas>
+<button id="playAgainBtn" style="display: none;">Play Again</button>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let ball = {
+        x: canvas.width / 2 - 20,
+        y: canvas.height / 2 - 20,
+        radius: 10,
+        speed: 3,
+        angle: Math.PI / 4
+    };
+
+    let bar = {
+        width: 130,
+        height: 15,
+        x: (canvas.width - 80) / 2,
+        y: canvas.height - 50,
+        speed: 30
+    };
+
+    let isGameOver = false;
+    let startTime = 0;
+    let score = 0;
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawBar() {
+        ctx.beginPath();
+        ctx.rect(bar.x, bar.y, bar.width, bar.height);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawScore() {
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText("Score: " + score, 20, 30);
+    }
+
+    function update() {
+        if (!isGameOver) {
+            const currentTime = Date.now();
+            const elapsedTime = (currentTime - startTime) / 1000;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            drawBar();
+            drawScore();
+
+            ball.x += ball.speed * Math.cos(ball.angle);
+            ball.y += ball.speed * Math.sin(ball.angle);
+
+            handleWallCollision();
+            handleBarCollision();
+
+            if (ball.y + ball.radius > canvas.height) {
+                handleGameOver();
+            }
+
+            score = Math.floor(elapsedTime);
+        }
+    }
+
+    function handleWallCollision() {
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+            ball.angle = Math.PI - ball.angle;
+        }
+
+        if (ball.y - ball.radius < 0) {
+            ball.angle = -ball.angle;
+        }
+    }
+
+    function handleBarCollision() {
+        if (
+            ball.y + ball.radius > bar.y &&
+            ball.x > bar.x &&
+            ball.x < bar.x + bar.width
+        ) {
+            let relativeIntersectX = ball.x - (bar.x + bar.width / 2);
+            let normalizedRelativeIntersectionX = relativeIntersectX / (bar.width / 2);
+            let bounceAngle = normalizedRelativeIntersectionX * (Math.PI / 3);
+            ball.angle = -bounceAngle;
+        }
+    }
+
+    function handleGameOver() {
+        isGameOver = true;
+
+        document.getElementById("playAgainBtn").style.display = "block";
+
+        alert("Game Over! Your score: " + score);
+    }
+
+    function resetGame() {
+        isGameOver = false;
+        startTime = Date.now();
+        ball.speed = 3;
+        ball.x = canvas.width / 2 - 20;
+        ball.y = canvas.height / 2 - 20;
+        bar.x = (canvas.width - bar.width) / 2;
+        score = 0;
+        document.getElementById("playAgainBtn").style.display = "none";
+        requestAnimationFrame(gameLoop);
+    }
+
+    function gameLoop() {
+        if (!startTime) {
+            startTime = Date.now();
+        }
+
+        if (!isGameOver) {
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowLeft" && bar.x > 0) {
+            bar.x -= bar.speed;
+        } else if (event.key === "ArrowRight" && bar.x < canvas.width - bar.width) {
+            bar.x += bar.speed;
+        }
+    });
+
+    document.getElementById("playAgainBtn").addEventListener("click", resetGame);
+
+    gameLoop();
+</script>
+</body>
+</html>
